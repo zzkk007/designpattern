@@ -2,7 +2,7 @@ package com.km.designpattern.geekbang.beautyDesign20;
 
 
 import org.apache.commons.lang.StringUtils;
-
+//KISS 原则讲的是“如何做”的问题（尽量保持简单），而 YAGNI 原则说的是“要不要做”的问题（当前不需要的就不要做）。
 public class isValidIpAddress {
 
     // 使用正则表达式
