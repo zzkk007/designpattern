@@ -1,0 +1,110 @@
+让你最快速地改善代码质量的20条编程规范（上）
+20 条最好用的编程规范：
+
+命名：
+    大到项目名、模块名、包名、对外暴露的接口，小到类名、函数名、变量名、参数名，
+    只要是做开发，我们就逃不过“起名字”这一关。
+    命名的好坏，对于代码的可读性来说非常重要，甚至可以说是起决定性作用的。
+    除此之外，命名能力也体现了一个程序员的基本编程素养。
+
+    对于影响范围比较大的命名，比如包名、接口、类名，我们一定要反复斟酌、推敲。
+    实在想不到好名字的时候，可以去 GitHub 上用相关的关键词联想搜索一下，
+    看看类似的代码是怎么命名的。
+
+1、命名多长合适
+    在足够表达其含义的情况下，命名越短越好。
+    对于一些默认的、大家都比较熟知的词，我比较推荐用缩写。、
+    比如，sec 表示 second、str 表示 string、num 表示 number、doc 表示 document。
+
+    除此之外，对于作用域比较小的变量，我们可以使用相对短的命名，比如一些函数内的临时变量。
+    相反，对于类名这种作用域比较大的，我更推荐用长的命名方式。
+
+    命名的时候，我们一定要学会换位思考，假设自己不熟悉这块代码，
+    从代码阅读者的角度去考量命名是否足够直观。
+
+2、利用上下文简化命名
+    例如简单的例子：
+       public class User{
+            private String userName;
+            private String userPassword;
+            private String userAvatarUrl; //...
+       }
+
+    在 User 类这样一个上下文中，我们没有在成员变量的命名中重复添加“user”这样一个前缀单词，
+    而是直接命名为 name、password、avatarUrl。在使用这些属性时候，
+    我们能借助对象这样一个上下文，表意也足够明确。具体代码如下所示：
+
+        User user = new User();
+        user.getName(); // 借助user对象这个上下文
+
+    函数参数也可以借助函数这个上下文来简化命名。
+
+        public void uploadUserAvatarImageToAliyun(String userAvatarImageUri);
+        //利用上下文简化为：
+        public void uploadUserAvatarImageToAliyun(String imageUri);
+
+3、命名要可读、可搜索：
+
+    可读,指不要用一些生僻、难发信的英文单词命名。
+    我们在命名的时候，最好能符合整个项目的命名习惯。
+    大家都用“selectXXX”表示查询，你就不要用“queryXXX”；
+    大家都用“insertXXX”表示插入一条数据，你就要不用“addXXX”，
+    统一规约是很重要的，能减少很多不必要的麻烦。
+
+4、如何命名接口和抽象类:
+
+    对于接口的命名，一般有两种比较常见的方式。一种是加前缀“I”，表示一个 Interface。
+    比如 IUserService，对应的实现类命名为 UserService。
+    另一种是不加前缀，比如 UserService，对应的实现类加后缀“Impl”，比如 UserServiceImpl。
+
+    对于抽象类的命名，也有两种方式，一种是带上前缀“Abstract”，比如 AbstractConfiguration；
+    另一种是不带前缀“Abstract”。实际上，对于接口和抽象类，选择哪种命名方式都是可以的，
+    只要项目里能够统一就行。
+
+注释：
+    命名很重要，注释跟命名同等重要。
+
+1、注释到底该写什么？
+    注释的目的就是让代码更容易懂。注释内容主要包含三个方面：做什么、为什么、怎么做。
+    /**
+    * (what) Bean factory to create beans.
+    *
+    * (why) The class likes Spring IOC framework, but is more lightweight.
+    *
+    * (how) Create objects from different sources sequentially:
+    * user specified object > SPI > configuration > default object.
+    */
+    public class BeansFactory {
+      // ...
+    }
+
+    注释比代码承载的信息量更大多：
+        命名的主要目的是解释“做什么”。比如，void increaseWalletAvailableBalance(BigDecimal amount)
+        表明这个函数用来增加钱包的可用余额，boolean isValidatedPassword 表明这个变量用来标识是
+        否是合法密码。函数和变量如果命名得好，确实可以不用再在注释中解释它是做什么的。
+        但是，对于类来说，包含的信息比较多，一个简单的命名就不够全面详尽了。
+        这个时候，在注释中写明“做什么”就合情合理了。
+
+    注释起到总结性作用、文档的作用：
+        在注释中，关于具体的代码实现思路，我们可以写一些总结性的说明、特殊情况的说明。
+        这样能够让阅读代码的人通过注释就能大概了解代码的实现思路，阅读起来就会更加容易。
+        实际上，对于有些比较复杂的类或者接口，我们可能还需要在注释中写清楚“如何用”，
+
+    一些总结性注释能让代码结构更清晰
+        // check if password is null or empty
+       if (StringUtils.isBlank(password)) {
+            return false;
+       }
+
+2. 注释是不是越多越好：
+
+    注释太多和太少都有问题。太多，有可能意味着代码写得不够可读，需要写很多注释来补充。
+    除此之外，注释太多也会对代码本身的阅读起到干扰。而且，后期的维护成本也比较高，
+    有时候代码改了，注释忘了同步修改，就会让代码阅读者更加迷惑。
+
+
+
+
+
+
+
