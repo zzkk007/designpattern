@@ -114,12 +114,7 @@
             return id.incrementAndGet();
           }
         }
-            
-    （5）枚举：
-        
-    
-    
-    
+
         
 2、单例存在哪些问题？
 
