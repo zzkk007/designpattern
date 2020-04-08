@@ -1,4 +1,4 @@
-package com.km.designpattern.geekbang.deautyDesign54;
+package com.km.designpattern.geekbang.beautyDesign54;
 
 public class test {
     public static void main(String[] args) {
