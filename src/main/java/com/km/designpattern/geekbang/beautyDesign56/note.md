@@ -262,9 +262,72 @@
           }
         }
             
+    利用 EventBus 框架实现的观察者模式，跟从零开始编写的观察者模式相比，
+    从大的流程上来说，实现思路大致一样，都需要定义 Observer，并且通过 register() 函数注册 Observer，
+    也都需要通过调用某个函数（比如，EventBus 中的 post() 函数）来给 Observer 发送消息（在 EventBus 中消息被称作事件 event）。
     
+    但在实现细节方面，它们又有些区别。基于 EventBus，我们不需要定义 Observer 接口，
+    任意类型的对象都可以注册到 EventBus 中，通过 @Subscribe 注解来标明类中哪个函数可以接收被观察者发送的消息。
+    
+    接下来，我们详细地讲一下，Guava EventBus 的几个主要的类和函数。
+        EventBus、AsyncEventBus:    
+            Guava EventBus 对外暴露的所有可调用接口，都封装在 EventBus 类中。
+            其中，EventBus 实现了同步阻塞的观察者模式，AsyncEventBus 继承自 EventBus，提供了异步非阻塞的观察者模式。
+                        
+            EventBus eventBus = new EventBus(); // 同步阻塞模式
+            EventBus eventBus = new AsyncEventBus(Executors.newFixedThreadPool(8))；// 异步阻塞模式
+                        
+        register() 函数:
+            EventBus 类提供了 register() 函数用来注册观察者。具体的函数定义如下所示。
+            它可以接受任何类型（Object）的观察者。而在经典的观察者模式的实现中，
+            register() 函数必须接受实现了同一 Observer 接口的类对象。        
+            public void register(Object object);
+                        
+        unregister() 函数:
+            相对于 register() 函数，unregister() 函数用来从 EventBus 中删除某个观察者。
+            public void unregister(Object object);                    
+            
+        post() 函数:
+            EventBus 类提供了 post() 函数，用来给观察者发送消息。具体的函数定义如下所示
+            public void post(Object event);
+            
+            跟经典的观察者模式的不同之处在于，当我们调用 post() 函数发送消息的时候，并非把消息发送给所有的观察者，
+            而是发送给可匹配的观察者。所谓可匹配指的是，能接收的消息类型是发送消息（post 函数定义中的 event）类型的父类。
+            
+            比如，AObserver 能接收的消息类型是 XMsg，
+            BObserver 能接收的消息类型是 YMsg，
+            CObserver 能接收的消息类型是 ZMsg。其中，
+            XMsg 是 YMsg 的父类。当我们如下发送消息的时候，相应能接收到消息的可匹配观察者如下所示：
+            
+            XMsg xMsg = new XMsg();
+            YMsg yMsg = new YMsg();
+            ZMsg zMsg = new ZMsg();
+            post(xMsg); => AObserver接收到消息
+            post(yMsg); => AObserver、BObserver接收到消息
+            post(zMsg); => CObserver接收到消息
+            
+            你可能会问，每个 Observer 能接收的消息类型是在哪里定义的呢？
+            我们来看下 Guava EventBus 最特别的一个地方，那就是 @Subscribe 注解。
+                            
+        @Subscribe 注解:
+            EventBus 通过 @Subscribe 注解来标明，某个函数能接收哪种类型的消息。具体的使用代码如下所示。
+            在 DObserver 类中，我们通过 @Subscribe 注解了两个函数 f1()、f2()。
+           
+            public DObserver {
+              //...省略其他属性和方法...
+              
+              @Subscribe
+              public void f1(PMsg event) { //... }
+              
+              @Subscribe
+              public void f2(QMsg event) { //... }
+            }    
         
-
+            当通过 register() 函数将 DObserver 类对象注册到 EventBus 的时候，
+            EventBus 会根据 @Subscribe 注解找到 f1() 和 f2()，
+            并且将两个函数能接收的消息类型记录下来（PMsg->f1，QMsg->f2）。
+            当我们通过 post() 函数发送消息（比如 QMsg 消息）的时候，
+            EventBus 会通过之前的记录（QMsg->f2），调用相应的函数（f2）。
 
 
 
