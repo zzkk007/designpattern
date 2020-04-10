@@ -59,12 +59,11 @@
     将可变的部分 method1()、method2() 留给子类 ContreteClass1 和 ContreteClass2 来实现。
     所有的子类都可以复用父类中模板方法定义的流程代码。
     
-    1、Java InputStream
+模板模式作用二：扩展:
+
+    模板模式的第二大作用的是扩展。这里所说的扩展，并不是指代码的扩展性，
+    而是指框架的扩展性，有点类似我们之前讲到的控制反转，       
     
-        Java IO 类库中，有很多类的设计用到了模板模式，
-        比如 InputStream、OutputStream、Reader、Writer。我们拿 InputStream 来举例说明一下
-        
-            
         
         
     
