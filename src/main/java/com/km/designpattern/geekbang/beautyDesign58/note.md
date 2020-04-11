@@ -64,7 +64,41 @@
     模板模式的第二大作用的是扩展。这里所说的扩展，并不是指代码的扩展性，
     而是指框架的扩展性，有点类似我们之前讲到的控制反转，       
     
+回调:回调的原理解析   
+
+    相对于普通的函数调用来说，回调是一种双向调用关系。
+    A 类事先注册某个函数 F 到 B 类，A 类在调用 B 类的 P 函数的时候，B 类反过来调用 A 类注册给它的 F 函数。
+    这里的 F 函数就是“回调函数”。A 调用 B，B 反过来又调用 A，这种调用机制就叫作“回调”。
+    A 类如何将回调函数传递给 B 类呢？不同的编程语言，有不同的实现方法。
+    C 语言可以使用函数指针，Java 则需要使用包裹了回调函数的类对象，我们简称为回调对象。
+    这里我用 Java 语言举例说明一下。代码如下所示:
+    
+        public interface ICallback {
+          void methodToCallback();
+        }
         
+        public class BClass {
+          public void process(ICallback callback) {
+            //...
+            callback.methodToCallback();
+            //...
+          }
+        }
+        
+        public class AClass {
+          public static void main(String[] args) {
+            BClass b = new BClass();
+            b.process(new ICallback() { //回调对象
+              @Override
+              public void methodToCallback() {
+                System.out.println("Call back me.");
+              }
+            });
+          }
+        }
+                 
+    
+    
         
     
         
