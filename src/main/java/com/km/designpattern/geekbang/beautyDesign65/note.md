@@ -387,10 +387,103 @@
             }
     
 迭代器模式（下）：如何设计实现一个支持“快照”功能的iterator:
+    
+    理解这个问题最关键的是理解“快照”两个字。所谓“快照”，指我们为容器创建迭代器的时候，相当于给容器拍了一张快照（Snapshot）。
+    之后即便我们增删容器中的元素，快照中的元素并不会做相应的改动。而迭代器遍历的对象是快照而非容器，这样就避免了在使用迭代器遍历的过程中，
+    增删容器中的元素，导致的不可预期的结果或者报错。
+        
+        List<Integer> list = new ArrayList<>();
+        list.add(3);
+        list.add(8);
+        list.add(2);
+        
+        Iterator<Integer> iter1 = list.iterator();//snapshot: 3, 8, 2
+        list.remove(new Integer(2));//list：3, 8
+        Iterator<Integer> iter2 = list.iterator();//snapshot: 3, 8
+        list.remove(new Integer(3));//list：8
+        Iterator<Integer> iter3 = list.iterator();//snapshot: 3
+        
+        // 输出结果：3 8 2
+        while (iter1.hasNext()) {
+          System.out.print(iter1.next() + " ");
+        }
+        System.out.println();
+        
+        // 输出结果：3 8
+        while (iter2.hasNext()) {
+          System.out.print(iter1.next() + " ");
+        }
+        System.out.println();
+        
+        // 输出结果：8
+        while (iter3.hasNext()) {
+          System.out.print(iter1.next() + " ");
+        }
+        System.out.println();
+             
+    如果由你来实现上面的功能，你会如何来做呢
+        
+        public ArrayList<E> implements List<E> {
+          // TODO: 成员变量、私有函数等随便你定义
+          
+          @Override
+          public void add(E obj) {
+            //TODO: 由你来完善
+          }
+          
+          @Override
+          public void remove(E obj) {
+            // TODO: 由你来完善
+          }
+          
+          @Override
+          public Iterator<E> iterator() {
+            return new SnapshotArrayIterator(this);
+          }
+        }
+        
+        public class SnapshotArrayIterator<E> implements Iterator<E> {
+          // TODO: 成员变量、私有函数等随便你定义
+          
+          @Override
+          public boolean hasNext() {
+            // TODO: 由你来完善
+          }
+          
+          @Override
+          public E next() {//返回当前元素，并且游标后移一位
+            // TODO: 由你来完善
+          }
+        }
 
-     
+解决方案一:
     
-    
+    我们先来看最简单的一种解决办法。在迭代器类中定义一个成员变量 snapshot 来存储快照。
+    每当创建迭代器的时候，都拷贝一份容器中的元素到快照中，后续的遍历操作都基于这个迭代器自己持有的快照来进行。
+    具体的代码实现如下所示：    
+ 
+        public class SnapshotArrayIterator<E> implements Iterator<E> {
+          private int cursor;
+          private ArrayList<E> snapshot;
+        
+          public SnapshotArrayIterator(ArrayList<E> arrayList) {
+            this.cursor = 0;
+            this.snapshot = new ArrayList<>();
+            this.snapshot.addAll(arrayList);
+          }
+        
+          @Override
+          public boolean hasNext() {
+            return cursor < snapshot.size();
+          }
+        
+          @Override
+          public E next() {
+            E currentItem = snapshot.get(cursor);
+            cursor++;
+            return currentItem;
+          }
+        }
     
     
     
