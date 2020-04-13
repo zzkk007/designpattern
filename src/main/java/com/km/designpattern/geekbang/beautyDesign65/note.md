@@ -154,4 +154,174 @@
     ，客户端代码只需要将迭代器类从 LinkedIterator 切换为 ReversedLinkedIterator 即可，其他代码都不需要修改。
     除此之外，添加新的遍历算法，我们只需要扩展新的迭代器类，也更符合开闭原则。
     
+迭代器模式（中）：遍历集合的同时，为什么不能增删集合元素？:
+
+    如果在使用迭代器遍历集合的同时增加、删除集合中的元素，会发生什么情况？
+    应该如何应对？如何在遍历的同时安全地删除集合元素？    
+    
+    在通过迭代器来遍历集合元素的同时，增加或者删除集合中的元素，有可能会导致某个元素被重复遍历或遍历不到。
+    不过，并不是所有情况下都会遍历出错，有的时候也可以正常遍历，所以，这种行为称为结果不可预期行为或者未决行为，
+    也就是说，运行结果到底是对还是错，要视情况而定。
+    
+        public interface Iterator<E> {
+          boolean hasNext();
+          void next();
+          E currentItem();
+        }
+        
+        public class ArrayIterator<E> implements Iterator<E> {
+          private int cursor;
+          private ArrayList<E> arrayList;
+        
+          public ArrayIterator(ArrayList<E> arrayList) {
+            this.cursor = 0;
+            this.arrayList = arrayList;
+          }
+        
+          @Override
+          public boolean hasNext() {
+            return cursor < arrayList.size();
+          }
+        
+          @Override
+          public void next() {
+            cursor++;
+          }
+        
+          @Override
+          public E currentItem() {
+            if (cursor >= arrayList.size()) {
+              throw new NoSuchElementException();
+            }
+            return arrayList.get(cursor);
+          }
+        }
+        
+        public interface List<E> {
+          Iterator iterator();
+        }
+        
+        public class ArrayList<E> implements List<E> {
+          //...
+          public Iterator iterator() {
+            return new ArrayIterator(this);
+          }
+          //...
+        }
+        
+        public class Demo {
+          public static void main(String[] args) {
+            List<String> names = new ArrayList<>();
+            names.add("a");
+            names.add("b");
+            names.add("c");
+            names.add("d");
+        
+            Iterator<String> iterator = names.iterator();
+            iterator.next();
+            names.remove("a");
+          }
+        }
+    
+    在遍历的过程中删除集合元素，有可能会导致某个元素遍历不到，那在遍历的过程中添加集合元素，会发生什么情况呢？
+    还是结合刚刚那个例子来讲解，我们将上面的代码稍微改造一下，把删除元素改为添加元素。具体的代码如下所示：
+    
+        public class Demo {
+          public static void main(String[] args) {
+            List<String> names = new ArrayList<>();
+            names.add("a");
+            names.add("b");
+            names.add("c");
+            names.add("d");
+        
+            Iterator<String> iterator = names.iterator();
+            iterator.next();
+            names.add(0, "x");
+          }
+        }
+    
+    跟删除情况类似，如果我们在游标的后面添加元素，就不会存在任何问题。所以，在遍历的同时添加集合元素也是一种不可预期行为。
+    当通过迭代器来遍历集合的时候，增加、删除集合元素会导致不可预期的遍历结果。
+    实际上，“不可预期”比直接出错更加可怕，有的时候运行正确，有的时候运行错误，一些隐藏很深、很难 debug 的 bug 就是这么产生的。
+    那我们如何才能避免出现这种不可预期的运行结果呢？
+    有两种比较干脆利索的解决方案：一种是遍历的时候不允许增删元素，另一种是增删元素之后让遍历报错。
+    
+    实际上，第二种解决方法更加合理。Java 语言就是采用的这种解决方案，增删元素之后，让遍历报错。
+    怎么确定在遍历时候，集合有没有增删元素呢？我们在 ArrayList 中定义一个成员变量 modCount，记录集合被修改的次数，
+    集合每调用一次增加或删除元素的函数，就会给 modCount 加 1。当通过调用集合上的 iterator() 函数来创建迭代器的时候，
+    我们把 modCount 值传递给迭代器的 expectedModCount 成员变量，之后每次调用迭代器上的 hasNext()、next()、currentItem() 函数，
+    我们都会检查集合上的 modCount 是否等于 expectedModCount，也就是看，在创建完迭代器之后，modCount 是否改变过。
+    
+    如果两个值不相同，那就说明集合存储的元素已经改变了，要么增加了元素，要么删除了元素，之前创建的迭代器已经不能正确运行了，】
+    再继续使用就会产生不可预期的结果，所以我们选择 fail-fast 解决方式，抛出运行时异常，结束掉程序，
+    让程序员尽快修复这个因为不正确使用迭代器而产生的 bug。
+    
+        public class ArrayIterator implements Iterator {
+          private int cursor;
+          private ArrayList arrayList;
+          private int expectedModCount;
+        
+          public ArrayIterator(ArrayList arrayList) {
+            this.cursor = 0;
+            this.arrayList = arrayList;
+            this.expectedModCount = arrayList.modCount;
+          }
+        
+          @Override
+          public boolean hasNext() {
+            checkForComodification();
+            return cursor < arrayList.size();
+          }
+        
+          @Override
+          public void next() {
+            checkForComodification();
+            cursor++;
+          }
+        
+          @Override
+          public Object currentItem() {
+            checkForComodification();
+            return arrayList.get(cursor);
+          }
+          
+          private void checkForComodification() {
+            if (arrayList.modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+          }
+        }
+        
+        //代码示例
+        public class Demo {
+          public static void main(String[] args) {
+            List<String> names = new ArrayList<>();
+            names.add("a");
+            names.add("b");
+            names.add("c");
+            names.add("d");
+        
+            Iterator<String> iterator = names.iterator();
+            iterator.next();
+            names.remove("a");
+            iterator.next();//抛出ConcurrentModificationException异常
+          }
+        }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
