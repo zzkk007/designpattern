@@ -308,14 +308,87 @@
         }
     
     
+    如何在遍历的同时安全地删除集合元素:
+        
+        像 Java 语言，迭代器类中除了前面提到的几个最基本的方法之外，还定义了一个 remove() 方法，能够在遍历集合的同时，安全地删除集合中的元素。
+        不过，需要说明的是，它并没有提供添加元素的方法。毕竟迭代器的主要作用是遍历，添加元素放到迭代器里本身就不合适。
     
+        我个人觉得，Java 迭代器中提供的 remove() 方法还是比较鸡肋的，作用有限。
+        它只能删除游标指向的前一个元素，而且一个 next() 函数之后，只能跟着最多一个 remove() 操作，
+        多次调用 remove() 操作会报错。我还是通过一个例子来解释一下。
+        
+            public class Demo {
+              public static void main(String[] args) {
+                List<String> names = new ArrayList<>();
+                names.add("a");
+                names.add("b");
+                names.add("c");
+                names.add("d");
+            
+                Iterator<String> iterator = names.iterator();
+                iterator.next();
+                iterator.remove();
+                iterator.remove(); //报错，抛出IllegalStateException异常
+              }
+            }
     
+        现在，我们一块来看下，为什么通过迭代器就能安全的删除集合中的元素呢？
+        源码之下无秘密。我们来看下 remove() 函数是如何实现的，代码如下所示。
+        稍微提醒一下，在 Java 实现中，迭代器类是容器类的内部类，并且 next() 函数不仅将游标后移一位，还会返回当前的元素
     
+        
+            public class ArrayList<E> {
+              transient Object[] elementData;
+              private int size;
+            
+              public Iterator<E> iterator() {
+                return new Itr();
+              }
+            
+              private class Itr implements Iterator<E> {
+                int cursor;       // index of next element to return
+                int lastRet = -1; // index of last element returned; -1 if no such
+                int expectedModCount = modCount;
+            
+                Itr() {}
+            
+                public boolean hasNext() {
+                  return cursor != size;
+                }
+            
+                @SuppressWarnings("unchecked")
+                public E next() {
+                  checkForComodification();
+                  int i = cursor;
+                  if (i >= size)
+                    throw new NoSuchElementException();
+                  Object[] elementData = ArrayList.this.elementData;
+                  if (i >= elementData.length)
+                    throw new ConcurrentModificationException();
+                  cursor = i + 1;
+                  return (E) elementData[lastRet = i];
+                }
+                
+                public void remove() {
+                  if (lastRet < 0)
+                    throw new IllegalStateException();
+                  checkForComodification();
+            
+                  try {
+                    ArrayList.this.remove(lastRet);
+                    cursor = lastRet;
+                    lastRet = -1;
+                    expectedModCount = modCount;
+                  } catch (IndexOutOfBoundsException ex) {
+                    throw new ConcurrentModificationException();
+                  }
+                }
+              }
+            }
     
-    
-    
-    
-    
+迭代器模式（下）：如何设计实现一个支持“快照”功能的iterator:
+
+     
     
     
     
